@@ -31,7 +31,7 @@ dishRouter
     Dishes.find({})
       .then(
         (dishes) => {
-          res.StatusCode = 200;
+          res.statusCode = 200;
           res.setHeader("Content-Type", "application/json");
           res.json(dishes); //It'll take as input a json string and send back to client
         },
@@ -95,7 +95,7 @@ dishRouter
     Dishes.findById(req.params.dishId)
       .then(
         (dish) => {
-          res.StatusCode = 200;
+          res.statusCode = 200;
           res.setHeader("Content-Type", "application/json");
           res.json(dish);
         },
@@ -129,7 +129,7 @@ dishRouter
     )
       .then(
         (dish) => {
-          res.StatusCode = 200;
+          res.statusCode = 200;
           res.setHeader("Content-Type", "application/json");
           res.json(dish);
         },
@@ -143,14 +143,14 @@ dishRouter
     Dishes.findByIdAndRemove(req.params.dishId)
       .then(
         (dish) => {
-          res.StatusCode = 200;
+          res.statusCode = 200;
           res.setHeader("Content-Type", "application/json");
           res.json(dish);
         },
         (err) => next(err)
       )
       .catch((err) => next(err));
-  }); //The last one will have semicolon ofcourse
+  }); //The last one will have a semicolon ofcourse
 
 dishRouter
   .route("/:dishId/comments")

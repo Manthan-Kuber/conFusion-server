@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-//Mongoose-currency intorduces a new data type currency
+//Mongoose-currency introduces a new data type currency
 require("mongoose-currency").loadType(mongoose);
 //Declaring the currency type
 const Currency = mongoose.Types.Currency;
@@ -64,7 +64,8 @@ const dishSchema = new Schema(
   { timestamps: true }
 );
 
-//Constrcut model form the Schema
+//Constrcut model form the Schema.
+//The first argument is the singular name of the collection your model is for. Mongoose automatically looks for the plural, lowercased version of your model name. Thus, for the example above, the model Tank is for the tanks collection in the database.
 var Dishes = mongoose.model("Dish", dishSchema);
 
 module.exports = Dishes;
