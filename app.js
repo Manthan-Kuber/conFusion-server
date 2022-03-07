@@ -8,9 +8,10 @@ var session = require("express-session");
 var FileStore = require("session-file-store")(session);
 var passport = require("passport");
 var authenticate = require("./authenticate");
+var config = require('./config')
 
 var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+var users = require("./routes/users");
 var dishRouter = require("./routes/dishRouter");
 var promoRouter = require("./routes/promoRouter");
 var leaderRouter = require("./routes/leaderRouter");
@@ -19,7 +20,7 @@ const mongoose = require("mongoose");
 
 const Dishes = require("./models/dishes");
 
-const url = "mongodb://localhost:27017/conFusion";
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 //Establish connection to the server
@@ -41,21 +42,22 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 // app.use(cookieParser("12345-67890-12345-67890"));
-app.use(
-  session({
-    name: "session-id",
-    secret: "12345-67890-12345-67890",
-    saveUninitialized: false,
-    resave: false,
-    store: new FileStore(),
-  })
-);
+
+// app.use(
+//   session({
+//     name: "session-id",
+//     secret: "12345-67890-12345-67890",
+//     saveUninitialized: false,
+//     resave: false,
+//     store: new FileStore(),
+//   })
+// );
 
 app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.session());
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/users", users);
 
 // function auth(req, res, next) {
 //   console.log(req.session);
@@ -97,20 +99,21 @@ app.use("/users", usersRouter);
 //   }
 // }
 
-function auth(req, res, next) {
-  console.log(req.user);
+// function auth(req, res, next) {
+//   console.log(req.user);
 
-  if (!req.user) {
-    var err = new Error("You are not authenticated!");
-    err.status = 403;
-    return next(err);
-  } else {
-    next();
-  }
-}
+//   if (!req.user) {
+//     var err = new Error("You are not authenticated!");
+//     err.status = 403;
+//     return next(err);
+//   } else {
+//     next();
+//   }
+// }
 
 
-app.use(auth);
+// app.use(auth);
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/dishes", dishRouter);

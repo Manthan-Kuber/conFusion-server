@@ -3,6 +3,7 @@ var router = express.Router();
 const bodyParser = require("body-parser");
 var User = require("../models/user");
 var passport = require("passport");
+var authenticate = require("../authenticate");
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -74,13 +75,14 @@ router.post("/signup", function (req, res, next) {
 //   }
 // });
 
-router.post("/login", passport.authenticate("local"),(req, res) => {
-  console.log(req.body)
-  res.statusCode = 200, 
-  res.setHeader("Content-Type", "application/json");
+router.post("/login", passport.authenticate("local"), (req, res) => {
+  var token = authenticate.getToken({ _id: req.user._id }); //getToken(id of the user)
+  (res.statusCode = 200), res.setHeader("Content-Type", "application/json");
   res.json({
     success: true,
-    status: "You are Successfully Logged In"});
+    token: token, //token will be sent back to user/client and client will include token in every request in authorization header
+    status: "You are Successfully Logged In",
+  });
 });
 
 //No need for post as we are not sending any info to the server
