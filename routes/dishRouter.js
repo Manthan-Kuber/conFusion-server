@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const authenticate = require('../authenticate')
+const authenticate = require("../authenticate");
 
 const Dishes = require("../models/dishes");
 
@@ -30,6 +30,7 @@ dishRouter
   .get((req, res, next) => {
     // res.end("Will send all the dishes to you!");
     Dishes.find({})
+      .populate("comments.author")
       .then(
         (dishes) => {
           res.statusCode = 200;
@@ -42,7 +43,7 @@ dishRouter
   })
 
   // If the server gets a POST request, it'll first execute the above(app.all) code and then because next is called it will drop to the function below
-  .post(authenticate.verifyUser ,(req, res, next) => {
+  .post(authenticate.verifyUser, (req, res, next) => {
     // //POST request carries some information with it
     // res.end(
     //   //We are able to parse the incoming (POST) requests
@@ -65,12 +66,12 @@ dishRouter
   })
 
   //We leave it as it is as PUT request is not allowed
-  .put(authenticate.verifyUser,(req, res, next) => {
+  .put(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /dishes");
   })
 
-  .delete(authenticate.verifyUser,(req, res, next) => {
+  .delete(authenticate.verifyUser, (req, res, next) => {
     // res.end("Deleting all the dishes!");
     Dishes.remove({})
       .then(
@@ -94,6 +95,7 @@ dishRouter
   .get((req, res, next) => {
     // res.end("Will send details of the dish: " + req.params.dishId + " to you!");
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           res.statusCode = 200;
@@ -105,13 +107,13 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .post(authenticate.verifyUser,(req, res, next) => {
+  .post(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end("POST operation not supported on /dishes/" + req.params.dishId);
   })
 
   //Same as we did above, as put request is not allowed,we leave it as it is
-  .put(authenticate.verifyUser,(req, res, next) => {
+  .put(authenticate.verifyUser, (req, res, next) => {
     // //Params used to access the parameters in the url
     // res.write("Updating the dish: " + req.params.dishId);
     // //Body Parser used to parse the body of the request into JSON and therfore allows us to access it
@@ -139,7 +141,7 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .delete(authenticate.verifyUser,(req, res, next) => {
+  .delete(authenticate.verifyUser, (req, res, next) => {
     // res.end("Deleting dish: " + req.params.dishId);
     Dishes.findByIdAndRemove(req.params.dishId)
       .then(
@@ -157,6 +159,7 @@ dishRouter
   .route("/:dishId/comments")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           if (dish != null) {
@@ -173,7 +176,7 @@ dishRouter
       )
       .catch((err) => next(err));
   })
-  .put(authenticate.verifyUser,(req, res, next) => {
+  .put(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end(
       "PUT Operation is not supported on /dishes/" +
@@ -182,12 +185,13 @@ dishRouter
     );
   })
 
-  .post(authenticate.verifyUser,(req, res, next) => {
+  .post(authenticate.verifyUser, (req, res, next) => {
     Dishes.findById(req.params.dishId)
       .then(
         (dish) => {
           if (dish != null) {
             //Replaced push with .unshift()
+            req.body.author = req.user._id;
             dish.comments.unshift(req.body);
             dish.save().then(
               (dish) => {
@@ -208,33 +212,38 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .delete(authenticate.verifyUser,(req, res, next) => {
+  .delete(authenticate.verifyUser, (req, res, next) => {
     Dishes.findById(req.params.dishId)
-    .then((dish) => {
-        if (dish != null) {
-            for (var i = (dish.comments.length -1); i >= 0; i--) {
-                dish.comments.id(dish.comments[i]._id).remove();
+      .then(
+        (dish) => {
+          if (dish != null) {
+            for (var i = dish.comments.length - 1; i >= 0; i--) {
+              dish.comments.id(dish.comments[i]._id).remove();
             }
-            dish.save()
-            .then((dish) => {
+            dish.save().then(
+              (dish) => {
                 res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(dish);                
-            }, (err) => next(err));
-        }
-        else {
-            err = new Error('Dish ' + req.params.dishId + ' not found');
+                res.setHeader("Content-Type", "application/json");
+                res.json(dish);
+              },
+              (err) => next(err)
+            );
+          } else {
+            err = new Error("Dish " + req.params.dishId + " not found");
             err.status = 404; //App.js has error handler which will handle all the errors
             return next(err);
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err)); //If statement's errors will also be caught here 
+          }
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err)); //If statement's errors will also be caught here
   });
 
 dishRouter
   .route("/:dishId/comments/:commentId")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           if (dish != null && dish.comments.id(req.params.commentId) != null) {
@@ -256,7 +265,7 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .post(authenticate.verifyUser,(req, res, next) => {
+  .post(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end(
       "POST operation not supported on /dishes/" +
@@ -266,62 +275,74 @@ dishRouter
     );
   })
 
-  .put(authenticate.verifyUser,(req, res, next) => {
+  .put(authenticate.verifyUser, (req, res, next) => {
     Dishes.findById(req.params.dishId)
-    .then((dish) => {
-        if (dish != null && dish.comments.id(req.params.commentId) != null) {
-          //Only updates rating and comment and not author
+      .then(
+        (dish) => {
+          if (dish != null && dish.comments.id(req.params.commentId) != null) {
             if (req.body.rating) {
-                dish.comments.id(req.params.commentId).rating = req.body.rating;
+              dish.comments.id(req.params.commentId).rating = req.body.rating;
             }
             if (req.body.comment) {
-                dish.comments.id(req.params.commentId).comment = req.body.comment;                
+              dish.comments.id(req.params.commentId).comment = req.body.comment;
             }
-            dish.save()
-            .then((dish) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(dish);                
-            }, (err) => next(err));
-        }
-        else if (dish == null) {
-            err = new Error('Dish ' + req.params.dishId + ' not found');
+            dish.save().then(
+              (dish) => {
+                Dishes.findById(dish._id)
+                  .populate("comments.author")
+                  .then((dish) => {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(dish);
+                  });
+              },
+              (err) => next(err)
+            );
+          } else if (dish == null) {
+            err = new Error("Dish " + req.params.dishId + " not found");
             err.status = 404;
             return next(err);
-        }
-        else {
-            err = new Error('Comment ' + req.params.commentId + ' not found');
-            err.status = 404; //App.js has error handler whihc will handle all the errors
-            return next(err);            
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
+          } else {
+            err = new Error("Comment " + req.params.commentId + " not found");
+            err.status = 404;
+            return next(err);
+          }
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   })
-
-  .delete(authenticate.verifyUser,(req, res, next) => {
+  .delete(authenticate.verifyUser, (req, res, next) => {
     Dishes.findById(req.params.dishId)
-    .then((dish) => {
-        if (dish != null && dish.comments.id(req.params.commentId) != null) {
+      .then(
+        (dish) => {
+          if (dish != null && dish.comments.id(req.params.commentId) != null) {
             dish.comments.id(req.params.commentId).remove();
-            dish.save()
-            .then((dish) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(dish);                
-            }, (err) => next(err));
-        }
-        else if (dish == null) {
-            err = new Error('Dish ' + req.params.dishId + ' not found');
+            dish.save().then(
+              (dish) => {
+                Dishes.findById(dish._id)
+                  .populate("comments.author")
+                  .then((dish) => {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(dish);
+                  });
+              },
+              (err) => next(err)
+            );
+          } else if (dish == null) {
+            err = new Error("Dish " + req.params.dishId + " not found");
             err.status = 404;
             return next(err);
-        }
-        else {
-            err = new Error('Comment ' + req.params.commentId + ' not found');
+          } else {
+            err = new Error("Comment " + req.params.commentId + " not found");
             err.status = 404;
-            return next(err);            
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
+            return next(err);
+          }
+        },
+        (err) => next(err)
+      )
+      .catch((err) => next(err));
   });
 
 //Similar to export default. Older syntax and not ES6 thats why
