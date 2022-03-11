@@ -43,7 +43,7 @@ dishRouter
   })
 
   // If the server gets a POST request, it'll first execute the above(app.all) code and then because next is called it will drop to the function below
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     // //POST request carries some information with it
     // res.end(
     //   //We are able to parse the incoming (POST) requests
@@ -66,12 +66,12 @@ dishRouter
   })
 
   //We leave it as it is as PUT request is not allowed
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /dishes");
   })
 
-  .delete(authenticate.verifyUser, (req, res, next) => {
+  .delete(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     // res.end("Deleting all the dishes!");
     Dishes.remove({})
       .then(
@@ -107,13 +107,13 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end("POST operation not supported on /dishes/" + req.params.dishId);
   })
 
   //Same as we did above, as put request is not allowed,we leave it as it is
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     // //Params used to access the parameters in the url
     // res.write("Updating the dish: " + req.params.dishId);
     // //Body Parser used to parse the body of the request into JSON and therfore allows us to access it
@@ -141,7 +141,7 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .delete(authenticate.verifyUser, (req, res, next) => {
+  .delete(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     // res.end("Deleting dish: " + req.params.dishId);
     Dishes.findByIdAndRemove(req.params.dishId)
       .then(
@@ -212,7 +212,7 @@ dishRouter
       .catch((err) => next(err));
   })
 
-  .delete(authenticate.verifyUser, (req, res, next) => {
+  .delete(authenticate.verifyUser,authenticate.verifyAdmin, (req, res, next) => {
     Dishes.findById(req.params.dishId)
       .then(
         (dish) => {

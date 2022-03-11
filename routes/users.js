@@ -9,9 +9,22 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get("/", function (req, res, next) {
-  res.send("respond with a resource");
-});
+router.get(
+  "/",
+  authenticate.verifyUser,
+  authenticate.verifyAdmin,
+  (req, res, next) => {
+    User.find({}, (err, users) => {
+      if (err) {
+        return next(err);
+      } else {
+        res.statusCode = 200;
+        res.setHeader("Content_type", "application/json");
+        res.json(users);
+      }
+    });
+  }
+);
 
 router.post("/signup", function (req, res, next) {
   User.register(
@@ -86,8 +99,13 @@ router.post("/signup", function (req, res, next) {
 // });
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
-  var token = authenticate.getToken({ _id: req.user._id }); //getToken(id of the user)
-  (res.statusCode = 200), res.setHeader("Content-Type", "application/json");
+  var token = authenticate.getToken({
+    _id: req.user._id,
+    firstname: req.user.firstname,
+    lastname: req.user.lastname,
+  }); //getToken(id of the user)
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "application/json");
   res.json({
     success: true,
     token: token, //token will be sent back to user/client and client will include token in every request in authorization header

@@ -22,7 +22,7 @@ opts.secretOrKey = config.secretKey;
 exports.jwtPassport = passport.use(
   new JwtStrategy(opts, (jwt_payload, done) => {
     console.log("JWT payload: ", jwt_payload);
-    User.findOne({_id: jwt_payload._id }, (err, user) => {
+    User.findOne({ _id: jwt_payload._id }, (err, user) => {
       if (err) {
         return done(err, false); //again done is the callback passport will pass to our strategy //done has 3 params (see intellisense suggestions)
       } else if (user) {
@@ -34,4 +34,15 @@ exports.jwtPassport = passport.use(
   })
 ); //use(opts,verifyFunction) //done is callback provided by passport. Done can be used for passing info back to passport
 
-exports.verifyUser = passport.authenticate('jwt',{session:false}) //We are not creating sessions as we are using session based authentication //.authenticate(strategy,options)
+exports.verifyUser = passport.authenticate("jwt", { session: false }); //We are not creating sessions as we are using session based authentication //.authenticate(strategy,options)
+
+exports.verifyAdmin = (req,res,next) => {
+  if (req.user.admin) next();
+  else {
+    let err = new Error("You are not authorized to perform this operation!");
+    err.status = 403;
+    return next(err);
+  }
+};
+
+
