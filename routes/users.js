@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 var User = require("../models/user");
 var passport = require("passport");
 var authenticate = require("../authenticate");
+var cors = require("./cors");
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -11,6 +12,7 @@ router.use(bodyParser.json());
 /* GET users listing. */
 router.get(
   "/",
+  cors.corsWithOptions,
   authenticate.verifyUser,
   authenticate.verifyAdmin,
   (req, res, next) => {
@@ -26,7 +28,7 @@ router.get(
   }
 );
 
-router.post("/signup", function (req, res, next) {
+router.post("/signup", cors.corsWithOptions, function (req, res, next) {
   User.register(
     new User({ username: req.body.username }),
     req.body.password,
@@ -98,20 +100,25 @@ router.post("/signup", function (req, res, next) {
 //   }
 // });
 
-router.post("/login", passport.authenticate("local"), (req, res) => {
-  var token = authenticate.getToken({
-    _id: req.user._id,
-    firstname: req.user.firstname,
-    lastname: req.user.lastname,
-  }); //getToken(id of the user)
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "application/json");
-  res.json({
-    success: true,
-    token: token, //token will be sent back to user/client and client will include token in every request in authorization header
-    status: "You are Successfully Logged In",
-  });
-});
+router.post(
+  "/login",
+  cors.corsWithOptions,
+  passport.authenticate("local"),
+  (req, res) => {
+    var token = authenticate.getToken({
+      _id: req.user._id,
+      firstname: req.user.firstname,
+      lastname: req.user.lastname,
+    }); //getToken(id of the user)
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      success: true,
+      token: token, //token will be sent back to user/client and client will include token in every request in authorization header
+      status: "You are Successfully Logged In",
+    });
+  }
+);
 
 //No need for post as we are not sending any info to the server
 router.get("/logout", (req, res, next) => {
